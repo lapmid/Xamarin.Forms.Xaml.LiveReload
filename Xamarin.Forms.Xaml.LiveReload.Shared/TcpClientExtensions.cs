@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 
-namespace Xamarin.Forms.Xaml.LiveReload
+namespace Server1
 {
     public enum MessageType
     {

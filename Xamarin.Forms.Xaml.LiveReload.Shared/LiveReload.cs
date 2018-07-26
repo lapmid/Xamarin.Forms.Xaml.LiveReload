@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Server1;
 using Xamarin.Forms;
 
 namespace Xamarin.Forms.Xaml.LiveReload
@@ -74,7 +75,8 @@ namespace Xamarin.Forms.Xaml.LiveReload
             })
             .ContinueWith(t =>
             {
-                if (t.IsFaulted) onException(t.Exception);
+                if (t.IsFaulted) 
+                    onException(t.Exception);
             });
         }
         
