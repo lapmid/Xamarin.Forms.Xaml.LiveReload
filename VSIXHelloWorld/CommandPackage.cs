@@ -13,6 +13,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.Win32;
 
+
 using Task = System.Threading.Tasks.Task;
 
 namespace VSIXHelloWorld
@@ -169,7 +170,8 @@ namespace VSIXHelloWorld
             
             var msg = System.IO.Path.GetDirectoryName(_dte.Solution.FullName);
             System.Windows.Forms.MessageBox.Show("solution opened : " +msg);
-            LiveXaml.Main(msg);
+            LiveXaml xml = new LiveXaml();
+            xml.Main(msg);
             return VSConstants.S_OK;
 
         }
@@ -195,5 +197,7 @@ namespace VSIXHelloWorld
         }
 
         #endregion
-    }
+     
+       
+}
 }

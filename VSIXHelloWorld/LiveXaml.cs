@@ -7,13 +7,21 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using EnvDTE;
+using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
+using static Microsoft.VisualStudio.VSConstants;
 
 namespace VSIXHelloWorld
 {
-   public static  class LiveXaml
+   public class LiveXaml 
     {
-        public static void Main(string DirPath)
+       
+        public  string FilePath;
+        public  void Main(string DirPath)
         {
+            FilePath = DirPath;
             var port = 52222;
 
             Task.Run(() =>
@@ -23,7 +31,7 @@ namespace VSIXHelloWorld
                 {
                     var udp = new UdpClient { EnableBroadcast = true };
                     udp.Send(new byte[0], 0, "255.255.255.255", port);
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                    System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
                 }
             });
 
@@ -59,7 +67,7 @@ namespace VSIXHelloWorld
                 }
             });
 
-            var fw = new FileSystemWatcher(DirPath)
+            var fw = new FileSystemWatcher(FilePath)
             {
                 IncludeSubdirectories = true,
                 EnableRaisingEvents = true,
@@ -67,34 +75,56 @@ namespace VSIXHelloWorld
             };
             fw.Changed += (sender, eventArgs) =>
             {
-                var extension = Path.GetExtension(eventArgs.FullPath);
-                if (extension != ".xaml~*" && extension != ".xaml") return;
-                var tildeIndex = eventArgs.FullPath.IndexOf('~');
-
-                var path = tildeIndex > 0
-                    ? eventArgs.FullPath.Substring(0, eventArgs.FullPath.IndexOf('~'))
-                    : eventArgs.FullPath;
-
-                Console.WriteLine(path);
-                var xaml = "";
-                using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var textReader = new StreamReader(fileStream))
+                string fullPath = eventArgs.FullPath;
+                fullPath = GetWatchDirectory(DirPath);
+                fullPath = fullPath.Replace(".#", "");
+                var extension = Path.GetExtension(fullPath);
+                if (extension == ".xaml~*" || extension == ".xaml")
                 {
-                    xaml = textReader.ReadToEnd();
+                    MessageBox.Show(fullPath);
+                    var tildeIndex = fullPath.IndexOf('~');
+
+                    var path = tildeIndex > 0
+                        ? fullPath.Substring(0, fullPath.IndexOf('~'))
+                        : fullPath;
+
+                    Console.WriteLine(path);
+                    var xaml = "";
+                    using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var textReader = new StreamReader(fileStream))
+                    {
+                        xaml = textReader.ReadToEnd();
+                    }
+
+                    clients.RemoveAll(x => !x.Connected);
+                    clients.SendMessage(new Message
+                    {
+                        MessageType = MessageType.XamlUpdated,
+                        Payload = Encoding.UTF8.GetBytes(xaml)
+                    });
                 }
-
-                clients.RemoveAll(x => !x.Connected);
-                clients.SendMessage(new Message
-                {
-                    MessageType = MessageType.XamlUpdated,
-                    Payload = Encoding.UTF8.GetBytes(xaml)
-                });
+               
 
             };
-            Console.WriteLine($"Watching for file changes in {DirPath}");
+            //Console.WriteLine($"Watching for file changes in {GetWatchDirectory(DirPath)}");
 
             Console.ReadLine();
         }
+
+        private static string GetWatchDirectory(string path)
+        {
+
+            string ms= Helper.main();
+            
+            if (String.IsNullOrEmpty(ms))
+                return path;
+
+            return ms;
+        }
+
+        
+
+        
+       
     }
 }
-

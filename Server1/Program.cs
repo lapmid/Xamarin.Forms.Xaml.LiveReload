@@ -69,27 +69,30 @@ namespace Server1
                 string fullPath = eventArgs.FullPath;
                 fullPath = fullPath.Replace(".#", "");
                 var extension = Path.GetExtension(fullPath);
-                if (extension != ".xaml~*" && extension != ".xaml") return;
-                var tildeIndex = fullPath.IndexOf('~');
-
-                var path = tildeIndex > 0
-                    ? fullPath.Substring(0, fullPath.IndexOf('~'))
-                    : fullPath;
-
-                Console.WriteLine(path);
-                var xaml = "";
-                using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var textReader = new StreamReader(fileStream))
+                if (extension == ".xaml~*" || extension == ".xaml")
                 {
-                    xaml = textReader.ReadToEnd();
+                    var tildeIndex = fullPath.IndexOf('~');
+
+                    var path = tildeIndex > 0
+                        ? fullPath.Substring(0, fullPath.IndexOf('~'))
+                        : fullPath;
+
+                    Console.WriteLine(path);
+                    var xaml = "";
+                    using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var textReader = new StreamReader(fileStream))
+                    {
+                        xaml = textReader.ReadToEnd();
+                    }
+
+                    clients.RemoveAll(x => !x.Connected);
+                    clients.SendMessage(new Message
+                    {
+                        MessageType = MessageType.XamlUpdated,
+                        Payload = Encoding.UTF8.GetBytes(xaml)
+                    });
                 }
-
-                clients.RemoveAll(x => !x.Connected);
-                clients.SendMessage(new Message
-                {
-                    MessageType = MessageType.XamlUpdated,
-                    Payload = Encoding.UTF8.GetBytes(xaml)
-                });
+             
 
             };
             Console.WriteLine($"Watching for file changes in {GetWatchDirectory()}");
